@@ -32,14 +32,14 @@ Unlike traditional tunneling solutions that require outbound connections to sign
 ┌─────────────┐         GitHub PR (Signaling)           ┌─────────────┐
 │             │  ─────────────────────────────────▶     │             │
 │  User Node  │                                         │  VPS Server │
-│  (Client)   │  ◀─────────────────────────────────     │  (Scanner)  │
+│  (Client)   │  ◀────────────────────────────────▶     │  (Scanner)  │
 │             │     Direct TCP via Residential Proxy    │             │
 └─────────────┘                                         └─────────────┘
       │                                                        │
-      │                                                   ┌────▼─────┐
-      │                                                   │ Resident │
-      │                                                   │ Proxies  │
-      │                                                   └────┬─────┘
+      │                                                        │
+      │                                                        │
+      │                                                        │
+      │                                                        │ 
       ▼                                                        │
 ┌─────────────┐                                                │
 │ Local Proxy │                                                │
