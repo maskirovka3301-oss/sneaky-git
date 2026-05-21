@@ -224,7 +224,7 @@ const MAIN_REPO_NAME = 'main-repo';  // Your repository name
     ],
     "dynamic": {
       "enabled": true,
-      "shellCommand": ".//start-residential-proxy.sh",
+      "shellCommand": "./start-residential-proxy.sh",
       "cleanupCommand": "./cleanup-proxy.sh",
       "arguments": [
         "--provider", "{PROVIDER_NAME}",
