@@ -1,0 +1,75 @@
+{
+  "github": {
+    "owner": "yourorg",
+    "repo": "main-repo",
+    "pollIntervalMs": 10000
+  },
+  "connection": {
+    "targetPort": 44333,
+    "timeoutMs": 45000,
+    "ttlMs": 1200000,
+    "healthCheckIntervalMs": 30000,
+    "healthCheckTimeoutMs": 60000
+  },
+  "residentialProxyProvider": {
+    "name": "oxylabs",
+    "enabled": true,
+    "config": {
+      "apiKey": "your-api-key-here",
+      "apiSecret": "your-api-secret-here",
+      "username": "customer-USERNAME",
+      "password": "PASSWORD",
+      "country": "US",
+      "sessionId": "random",
+      "stickySession": true
+    },
+    "fallbackToStatic": true
+  },
+  "proxies": {
+    "static": [
+      "socks5://backup-proxy1:1080",
+      "socks5://backup-proxy2:1080"
+    ],
+    "dynamic": {
+      "enabled": true,
+      "shellCommand": "./start-residential-proxy.sh",
+      "cleanupCommand": "./cleanup-proxy.sh",
+      "arguments": [
+        "--provider", "{PROVIDER_NAME}",
+        "--api-key", "{PROVIDER_API_KEY}",
+        "--api-secret", "{PROVIDER_API_SECRET}",
+        "--username", "{PROVIDER_USERNAME}",
+        "--password", "{PROVIDER_PASSWORD}",
+        "--country", "{PROVIDER_COUNTRY}",
+        "--session-id", "{PROVIDER_SESSION_ID}",
+        "--sticky", "{PROVIDER_STICKY}",
+        "--client-ip", "{CLIENT_IP}",
+        "--target-port", "{TARGET_PORT}",
+        "--proxy-port", "{PROXY_PORT}"
+      ],
+      "portRange": {
+        "start": 10000,
+        "end": 11000
+      },
+      "maxRetries": 3,
+      "retryDelayMs": 2000,
+      "healthCheckEndpoint": ""
+    }
+  },
+  "encryption": {
+    "privateKeyPath": "./private.pem",
+    "rsaPadding": "RSA_PKCS1_OAEP_PADDING",
+    "aesKeyLength": 32,
+    "ivLength": 12
+  },
+  "logging": {
+    "level": "info",
+    "file": "./scanner.log",
+    "maxSizeMb": 100
+  },
+  "cleanup": {
+    "closePRAfterConnection": true,
+    "deleteBranchAfterConnection": true,
+    "failedConnectionCleanup": true
+  }
+}
