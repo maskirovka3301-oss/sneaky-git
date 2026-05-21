@@ -1,5 +1,3 @@
-Here's the updated README.md with detailed information about the complete signaling system, post-quantum encryption, and GitHub-based control channel:
-
 # Sneaky-Git - Post-Quantum Secure Tunneling via GitHub Signaling
 
 ![Proxy](logo.jpg)
