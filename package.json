@@ -1,0 +1,34 @@
+{
+  "name": "sneaky-git",
+  "version": "1.0.0",
+  "description": "Build globally unblockable services (a post-VPN connection tool)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maskirovka3301-oss/sneaky-git.git"
+  },
+  "keywords": [
+    "censorship",
+    "resistant",
+    "services"
+  ],
+  "author": "Daniel R. Azulay",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/maskirovka3301-oss/sneaky-git/issues"
+  },
+  "homepage": "https://github.com/maskirovka3301-oss/sneaky-git#readme",
+  "dependencies": {
+    "@noble/post-quantum": "^0.6.1",
+    "@octokit/rest": "^22.0.1",
+    "axios": "^1.16.1",
+    "nat-upnp": "^1.1.1",
+    "net": "^1.0.2",
+    "node-fetch": "^3.3.2",
+    "simple-git": "^3.36.0",
+    "uuid": "^14.0.0"
+  }
+}
