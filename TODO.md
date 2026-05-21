@@ -1,22 +1,2 @@
-- User forks my public GitHub repository and runs the Node.js tool inside.
-- The tool generates a UUIDv4 (used as branch name).
-- The tool gets the user’s current public IP address.
-- The tool encrypts the IP + timestamp + UUID + metadata using my public key (rotated often) (hybrid RSA + AES-GCM encryption).
-- The tool creates a new branch named exactly after the UUID on the user’s fork.
-- The tool creates a file with a **randomized name** (e.g. `a1b2c3d4...f9.enc`) containing the encrypted data.
-- The tool commits and pushes the branch to the user’s fork.
-- The tool automatically creates a Pull Request from the fork to my main repository.
-- The tool starts a listener on a port (e.g. 44333) on the user’s machine, ready to accept inbound connections.
-- My VPS runs a scanner script that continuously polls my main repository for new Pull Requests / branches that match the UUID pattern.
-- When a new matching PR/branch is found, the scanner reads the only `.enc` file in that branch.
-- The scanner decrypts the file using my private key and extracts the user’s IP address.
-- The scanner picks a random residential proxy from my rotating pool.
-- Using the residential proxy as the source IP, the VPS actively connects to the user’s public IP on the listening port.
-- Once the TCP connection is established, both sides perform a handshake.
-- They negotiate a post-quantum hybrid encrypted session (e.g. ML-KEM + X25519 for key exchange + AES-256-GCM for data), through a tunnel that has to be resistant to deep packet inspection.
-- All subsequent data exchanged between my service and the user’s tool is encrypted with this post-quantum secure DPI-proof channel.
-- After successful connection, the VPS closes the PR / deletes the branch for cleanup.
-- The user can now use my service through this encrypted, DPI-resistant link that originated from a rotating residential IP.
-- Add timeout: If inbound connection fails after 30–60 seconds, the server rotates the ip and tries again.
-- Short-lived UUIDs (expire after 10–30 minutes).
-- Connection health monitoring and automatic reconnection.
+- Oxylabs support
+- Bright Data support
