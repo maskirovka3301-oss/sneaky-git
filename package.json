@@ -6,6 +6,7 @@
   "scripts": {
     "scanner": "node scanner.js",
     "signal": "node signal.js"
+    "generate-keypair": "node generate-keypair.js"
   },
   "repository": {
     "type": "git",
