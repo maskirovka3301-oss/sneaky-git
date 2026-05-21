@@ -1,4 +1,4 @@
-# Sneaky-Git - Post-Quantum Secure Tunneling via GitHub Signaling
+# SNEAKY GIT - Post-Quantum Secure Tunneling via GitHub Signaling
 
 ![Proxy](logo.jpg)
 
@@ -10,7 +10,7 @@ A sophisticated, zero-trust tunneling system that uses GitHub as a signaling cha
 
 Unlike traditional tunneling solutions that require outbound connections to signaling servers, Sneaky-Git uses **GitHub Pull Requests as a dead-drop signaling mechanism**. The user's machine never needs to know your server's IP address or make any outbound connections (except GitHub API) to initiate the tunnel - your server connects to them through residential proxies.
 
-## Features
+## New Features
 
 - **GitHub-Based Signaling**: Uses Pull Requests as a secure, asynchronous message queue
 - **Zero Outbound Connections**: Client doesn't need to know server IP or connect outward
@@ -23,6 +23,8 @@ Unlike traditional tunneling solutions that require outbound connections to sign
 - **Short-lived UUIDs**: Automatic expiration after configurable TTL
 - **Zero Dependencies for Key Exchange**: Pure JavaScript ML-KEM implementation
 - **Fully Automated**: One command to establish complete tunnel
+- **Dynamic Proxy Instantiation**: On-demand proxy creation per connection
+- **Multi-Provider Support**: Works with Oxylabs, BrightData, Smartproxy, GeoSurf, NetNut
 
 ## Architecture Overview
 
@@ -33,17 +35,17 @@ Unlike traditional tunneling solutions that require outbound connections to sign
 │  (Client)   │  ◀─────────────────────────────────     │  (Scanner)  │
 │             │     Direct TCP via Residential Proxy    │             │
 └─────────────┘                                         └─────────────┘
-      │                                                         │
-      │                                                    ┌────▼────┐
-      │                                                    │Resident │
-      │                                                    │ Proxies │
-      │                                                    └───┬─────┘
+      │                                                        │
+      │                                                   ┌────▼─────┐
+      │                                                   │ Resident │
+      │                                                   │ Proxies  │
+      │                                                   └────┬─────┘
       ▼                                                        │
 ┌─────────────┐                                                │
 │ Local Proxy │                                                │
 │ 127.0.0.1   │                                                │
 │   :8080     │                                                │
-└─────────────┘                                                │
+└─────────────┘                                                |
       │                                                        │
       ▼                                                        ▼
 ┌─────────────┐                                         ┌─────────────┐
@@ -81,8 +83,9 @@ Unlike traditional tunneling solutions that require outbound connections to sign
    - Extracts and decrypts AES key using RSA private key
    - Decrypts metadata with AES-256-GCM
    - Validates timestamp (rejects if >20 minutes old)
-4. **Proxy Selection**: Randomly picks a residential proxy from rotating pool
-5. **Outbound Connection**: 
+4. **Dynamic Proxy Creation**: Executes shell command to instantiate residential proxy
+5. **Proxy Selection**: Randomly picks a residential proxy from rotating pool or creates dynamic one
+6. **Outbound Connection**: 
    - Connects through selected proxy to user's public IP:44333
    - Falls back to different proxies on timeout (30-60 seconds)
    - Rotates through entire proxy pool if needed
@@ -144,7 +147,7 @@ git clone https://github.com/yourusername/sneaky-git.git
 cd sneaky-git
 
 # Generate keypair (commits public key automatically)
-npm run generate-keypair
+npm run generate-keys
 
 # Install dependencies
 npm install
@@ -187,17 +190,60 @@ const MAIN_REPO_OWNER = 'yourorg';   // Your GitHub username/org
 const MAIN_REPO_NAME = 'main-repo';  // Your repository name
 ```
 
-### Server Configuration (`scanner.js`)
+### Server Configuration (`config.json`)
 
-```javascript
-const PROXY_LIST = [
-  'socks5://user:pass@proxy1:1080',   // Residential proxy 1
-  'socks5://user:pass@proxy2:1080',   // Residential proxy 2
-  'http://user:pass@proxy3:3128',     // HTTP proxy fallback
-];
-const CONNECTION_TIMEOUT_MS = 45000;   // 45 seconds timeout
-const TTL_MS = 20 * 60 * 1000;        // 20 minute expiry
-const POLL_INTERVAL_MS = 10000;       // Poll every 10 seconds
+```json
+{
+  "github": {
+    "owner": "yourorg",
+    "repo": "main-repo",
+    "pollIntervalMs": 10000
+  },
+  "connection": {
+    "targetPort": 44333,
+    "timeoutMs": 45000,
+    "ttlMs": 1200000,
+    "healthCheckIntervalMs": 30000,
+    "healthCheckTimeoutMs": 60000
+  },
+  "residentialProxyProvider": {
+    "name": "oxylabs",
+    "enabled": true,
+    "config": {
+      "username": "customer-USERNAME",
+      "password": "PASSWORD",
+      "country": "US",
+      "sessionId": "random",
+      "stickySession": true
+    },
+    "fallbackToStatic": true
+  },
+  "proxies": {
+    "static": [
+      "socks5://backup-proxy1:1080"
+    ],
+    "dynamic": {
+      "enabled": true,
+      "shellCommand": ".//start-residential-proxy.sh",
+      "cleanupCommand": "./cleanup-proxy.sh",
+      "arguments": [
+        "--provider", "{PROVIDER_NAME}",
+        "--username", "{PROVIDER_USERNAME}",
+        "--password", "{PROVIDER_PASSWORD}",
+        "--country", "{PROVIDER_COUNTRY}",
+        "--client-ip", "{CLIENT_IP}",
+        "--target-port", "{TARGET_PORT}",
+        "--proxy-port", "{PROXY_PORT}"
+      ],
+      "portRange": {
+        "start": 10000,
+        "end": 11000
+      },
+      "maxRetries": 3,
+      "retryDelayMs": 2000
+    }
+  }
+}
 ```
 
 ### GitHub Token Scopes
@@ -314,6 +360,11 @@ npm run generate-keys
 - Ensure private.pem is loaded correctly on VPS
 - Check for corruption in encrypted blob
 
+**Dynamic Proxy Creation Failed**
+- Verify shell script is executable: `chmod +x start-residential-proxy.sh`
+- Check provider credentials in config.json
+- Ensure port range is available (10000-11000)
+
 ### Debug Mode
 
 Enable detailed logging:
@@ -326,13 +377,21 @@ DEBUG=signal* node signal.js
 DEBUG=scanner* node scanner.js
 ```
 
-## Performance Characteristics
+## Project Structure
 
-- **Connection Setup**: 5-15 seconds (GitHub API + proxy connection + handshake)
-- **Throughput**: Limited by residential proxy (typically 10-50 Mbps)
-- **Latency**: Proxy-dependent, typically 200-800ms added
-- **Concurrent Connections**: Supports unlimited via local proxy
-- **Memory Usage**: ~50MB baseline, scales with active connections
+```
+sneaky-git/
+├── signal.js              # Client-side tunneling tool
+├── scanner.js             # Server-side scanner
+├── generate-keypair.js    # Key generation with auto-commit
+├── cleanup-proxy.sh       # Dynamic proxy cleanup script
+├── public.pem             # RSA public key (committed)
+├── private.pem            # RSA private key (gitignored)
+├── config.json            # Server configuration
+├── .gitignore            # Ignores private.pem and *.enc
+├── package.json          # Dependencies and scripts
+└── README.md             # This file
+```
 
 ## Limitations
 
@@ -341,44 +400,36 @@ DEBUG=scanner* node scanner.js
 - Residential proxies may have bandwidth limits
 - Initial connection requires 5-15 seconds setup time
 - UPnP may fail on some networks (manual port forwarding required)
+- SOCKS5 UDP ASSOCIATE command not implemented
+- GSS-API authentication not supported
 
-V## Future Improvements
+## Future Improvements
 
+- [ ] WebSocket support through tunnel
 - [ ] Multiple simultaneous tunnel sessions
 - [ ] Automatic proxy health checking and scoring
 - [ ] Bandwidth aggregation across multiple proxies
-
-## Repository Structure
-
-```
-sneaky-git/
-├── signal.js              # Client-side tunneling tool
-├── scanner.js             # Server-side scanner
-├── generate-keypair.js    # Key generation with auto-commit
-├── public.pem             # RSA public key (committed)
-├── private.pem            # RSA private key (gitignored)
-├── .gitignore            # Ignores private.pem and *.enc
-├── package.json          # Dependencies and scripts
-└── README.md             # This file
-```
+- [ ] Configurable circuit breaker patterns
+- [ ] Encrypted local storage of session keys
+- [ ] UDP ASSOCIATE support for DNS over SOCKS5
+- [ ] Connection pooling and reuse
+- [ ] Automatic country rotation strategies
 
 ## Requirements
 
 - Node.js 18.x or higher
 - GitHub account with Personal Access Token
-- Oxylabs or residential proxy subscription (server side)
+- Oxylabs or other residential proxy subscription (server side)
 - Network with outbound internet access
 
 ## License
 
-MIT License - See LICENSE file for details.
+AGPL-3 License - See LICENSE file for details.
 
 ## Contact & Support
-
-For inquiries or support please send an e-mail.
 
 **Email**: maskirovka3301@gmail.com  
 
 ---
 
-**If this tool helps you to build unblockable services, please give the repository a star.**
+**If this tool helps your web scraping or automation projects, please give the repository a star.**
