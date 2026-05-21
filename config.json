@@ -33,7 +33,7 @@
     "dynamic": {
       "enabled": true,
       "shellCommand": "./start-residential-proxy.sh",
-      "cleanupCommand": "./cleanup-proxy.sh",
+      "cleanupCommand": "./cleanup-proxy.sh --proxy-port {PROXY_PORT} --provider {PROVIDER_NAME} --session-id {SESSION_ID} --verbose",
       "arguments": [
         "--provider", "{PROVIDER_NAME}",
         "--api-key", "{PROVIDER_API_KEY}",
